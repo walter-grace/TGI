@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TGI Dashboard</title>
+  <link rel="stylesheet" href="/dashboard/dashboard.css">
+</head>
+<body>
+  <div class="dash-shell">
+    <header class="dash-topbar">
+      <div class="dash-brand">
+        <div class="dash-logo" aria-hidden="true">TG</div>
+        <div>
+          <h1 class="dash-title">TGI Dashboard</h1>
+        </div>
+      </div>
+      <div class="dash-meta">
+        <span class="dash-pill">
+          <span class="dot" aria-hidden="true"></span>
+          Auto-refresh · 5s
+        </span>
+      </div>
+    </header>
+
+    <main class="dash-main">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Queue
+          </div>
+          <div class="value violet" id="queueSize">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            Active
+          </div>
+          <div class="value emerald" id="activeCount">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            Trackers
+          </div>
+          <div class="value" id="trackerCount">—</div>
+        </div>
+      </div>
+
+      <div class="trackers-row" id="trackersRow" hidden></div>
+
+      <div class="split-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Queue</h2>
+          </div>
+          <div class="card-body">
+            <ul class="queue-list" id="queueList"></ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Sessions</h2>
+          </div>
+          <div class="card-body" style="padding-top: 0;">
+            <div class="table-wrap">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Turns</th>
+                    <th>Tokens</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sessionsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="logPanel" hidden>
+        <div class="card-header">
+          <h2>Logs · <span id="logSessionId"></span></h2>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="closeLogs()">Close</button>
+        </div>
+        <pre class="logs" id="logContent"></pre>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+
+    function queueItemLabel(q) {
+      if (typeof q === 'string') return escapeHtml(q);
+      const id = q && (q.identifier || q.id || '');
+      const title = q && q.title;
+      if (title) return escapeHtml(title) + (id ? ' <span style="opacity:.6;font-size:.75em">' + escapeHtml(id) + '</span>' : '');
+      return escapeHtml(id || String(q));
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    async function fetchStatus() {
+      const r = await fetch(API + '/api/status');
+      return r.json();
+    }
+
+    async function fetchSessions() {
+      const r = await fetch(API + '/api/sessions');
+      return r.json();
+    }
+
+    async function stopSession(id) {
+      await fetch(API + '/api/sessions/' + encodeURIComponent(id) + '/stop', { method: 'POST' });
+      refresh();
+    }
+
+    function closeLogs() {
+      document.getElementById('logPanel').hidden = true;
+    }
+
+    function showLogs(id, logs) {
+      document.getElementById('logSessionId').textContent = id;
+      const text = Array.isArray(logs) ? logs.join('\n') : '';
+      document.getElementById('logContent').textContent = text;
+      document.getElementById('logPanel').hidden = false;
+    }
+
+    function renderTrackers(trackers) {
+      const row = document.getElementById('trackersRow');
+      if (!trackers || trackers.length === 0) {
+        row.hidden = true;
+        row.innerHTML = '';
+        return;
+      }
+      row.hidden = false;
+      row.innerHTML = trackers.map(t => {
+        const on = t.healthy ? 'on' : 'off';
+        return '<span class="tracker-chip">' +
+          '<span class="dot ' + on + '" title="' + (t.healthy ? 'Healthy' : 'Unhealthy') + '"></span>' +
+          '<span>' + escapeHtml(t.kind) + ' · ' + escapeHtml(t.id) + '</span>' +
+          '</span>';
+      }).join('');
+    }
+
+    async function refresh() {
+      try {
+        const [status, data] = await Promise.all([fetchStatus(), fetchSessions()]);
+        document.getElementById('queueSize').textContent = status.queueSize ?? 0;
+        document.getElementById('activeCount').textContent = status.activeCount ?? 0;
+        const trackers = status.connectedTrackers ?? [];
+        document.getElementById('trackerCount').textContent = trackers.length;
+        renderTrackers(trackers);
+
+        const queue = data.queue ?? [];
+        document.getElementById('queueList').innerHTML = queue.length
+          ? queue.map(q => '<li>' + queueItemLabel(q) + '</li>').join('')
+          : '<li class="empty">Empty</li>';
+
+        const sessions = data.sessions ?? [];
+        document.getElementById('sessionsTable').innerHTML = sessions.length
+          ? sessions.map(s => {
+            const sid = escapeHtml(s.id);
+            const ident = s.issueIdentifier || s.id.slice(0, 12);
+            const stopBtn = s.status === 'running'
+              ? '<button type="button" class="btn btn-destructive btn-sm" data-stop="' + sid + '">Stop</button>'
+              : '';
+            const runningDot = s.status === 'running'
+              ? '<span class="badge-dot" aria-hidden="true"></span>'
+              : '';
+            return '<tr>' +
+              '<td><a href="#" data-logs="' + sid + '">' + escapeHtml(ident) + '</a></td>' +
+              '<td><span class="badge ' + escapeHtml(s.status) + '">' + runningDot + escapeHtml(s.status) + '</span></td>' +
+              '<td>' + (s.turnCount ?? '—') + '</td>' +
+              '<td>' + (s.tokenUsage ? Number(s.tokenUsage.totalTokens).toLocaleString() : '—') + '</td>' +
+              '<td>' + stopBtn + '</td>' +
+              '</tr>';
+          }).join('')
+          : '<tr><td colspan="5" style="color:rgb(113,113,122);padding:1rem">No sessions</td></tr>';
+
+        document.querySelectorAll('[data-logs]').forEach(el => {
+          el.addEventListener('click', function (e) {
+            e.preventDefault();
+            fetchSessionLogs(this.getAttribute('data-logs'));
+          });
+        });
+        document.querySelectorAll('[data-stop]').forEach(el => {
+          el.addEventListener('click', function () {
+            stopSession(this.getAttribute('data-stop'));
+          });
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function fetchSessionLogs(id) {
+      try {
+        const r = await fetch(API + '/api/sessions/' + encodeURIComponent(id));
+        const s = await r.json();
+        showLogs(id, s.logs || []);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>

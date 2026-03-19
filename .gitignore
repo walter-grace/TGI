@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*
+!.env.example
+# Session store can contain secrets if tools echo .env — never commit
+data/*
+!data/.gitkeep
+*.log
+.DS_Store

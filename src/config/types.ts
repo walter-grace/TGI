@@ -125,6 +125,10 @@ export interface ExperimentModeConfig {
 export interface AgentConfig {
   provider: string;
   model: string;
+  /** Env var for API key (e.g. OPENAI_API_KEY). Used by openai provider; others use provider-specific defaults. */
+  api_key_env?: string;
+  /** Base URL for OpenAI-compatible APIs (openai provider). Enables Azure, Bedrock proxy, vLLM, etc. */
+  base_url?: string;
   max_concurrent_agents: number;
   max_turns: number;
   timeout_minutes: number;

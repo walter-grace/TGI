@@ -40,9 +40,12 @@ workspace:
       echo "Workspace created for {{issue.identifier}}"
 
 agent:
-  provider: "openrouter"
+  provider: "openrouter"  # or "claude" | "openai" (OpenAI-compatible: Azure, Bedrock proxy, vLLM, etc.)
   model: "moonshotai/kimi-k2.5"  # Kimi 2.5 (default)
   # model: "xiaomi/mimo-v2-pro"  # alternative; free tier / upstream rate limits vary
+  # For provider: "openai" — use your own model/endpoint:
+  #   api_key_env: "OPENAI_API_KEY"
+  #   base_url: "https://api.openai.com/v1"  # or Azure, vLLM, Ollama proxy, etc.
   # available_models: ["moonshotai/kimi-k2.5", "xiaomi/mimo-v2-pro", "openai/gpt-5.4-nano", "google/gemini-3-flash-preview"]  # optional: dashboard dropdown
   max_concurrent_agents: 5
   max_turns: 60

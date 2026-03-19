@@ -13,8 +13,7 @@ import type { WorkflowConfig } from "../config/types.js";
 import { buildPrompt } from "./prompt-builder.js";
 import { TOOL_DEFINITIONS } from "./tools.js";
 import type { IAgentProvider, AgentMessage } from "./providers/interface.js";
-import { ClaudeProvider } from "./providers/claude.js";
-import { OpenRouterProvider } from "./providers/openrouter.js";
+import { createProvider } from "./providers/registry.js";
 import { runInDir } from "../utils/shell.js";
 import { logger } from "../observability/logger.js";
 import { runExperimentLoop } from "./experiment.js";
@@ -82,16 +81,6 @@ function truncateToTokenLimit(messages: AgentMessage[], maxTokens: number): Agen
     },
     ...recent,
   ];
-}
-
-function createProvider(config: WorkflowConfig): IAgentProvider {
-  if (config.agent.provider === "openrouter") {
-    return new OpenRouterProvider();
-  }
-  if (config.agent.provider === "claude") {
-    return new ClaudeProvider();
-  }
-  throw new Error(`Unknown agent provider: ${config.agent.provider}`);
 }
 
 async function tavilySearch(key: string, query: string): Promise<string> {

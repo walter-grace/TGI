@@ -33,6 +33,16 @@ src/
 3. Add config schema in `src/config/types.ts`
 4. Update WORKFLOW.md docs
 
+## Adding a Custom Agent Provider
+
+1. Implement `IAgentProvider` in `src/agent/providers/` (see `interface.ts`)
+2. Register before the daemon starts:
+   ```ts
+   import { registerProvider } from "./agent/providers/registry.js";
+   registerProvider("my-company", (config) => new MyCompanyProvider(config.agent));
+   ```
+3. Use `provider: "my-company"` in WORKFLOW.md
+
 ## Code Style
 
 - TypeScript strict mode

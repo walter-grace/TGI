@@ -18,10 +18,22 @@ AI agents pick up tasks from your board, work in isolated workspaces, and report
 
 TGI stays **tracker-agnostic** (`ITracker`), but Trello is the reference adapter because **visual queue + markdown tasks + comment threads + file-based workflow** is an unusually good match for autonomous agents.
 
+## Agent-agnostic: plug in your own model
+
+TGI uses a **pluggable agent layer** (`IAgentProvider`). Built-in providers:
+
+| Provider | Use case |
+|---------|----------|
+| `openrouter` | 300+ models via one API (default) |
+| `claude` | Direct Anthropic Claude |
+| `openai` | Any OpenAI-compatible endpoint — Azure OpenAI, AWS Bedrock proxy, vLLM, Ollama, or your enterprise gateway |
+
+For `openai`, set `base_url` and `api_key_env` in `WORKFLOW.md`. Enterprises can also **register custom providers** via `registerProvider()` in `src/agent/providers/registry.ts` without forking the core.
+
 ## Features
 
 - **Trello integration** — Poll cards from "Ready For Agent", move through Doing → Done; agents read/write comments for threaded context (plans, todos, outcomes)
-- **Multi-turn agent loop** — Claude/OpenRouter with tool use (read/write files, run commands, post comments)
+- **Multi-turn agent loop** — Pluggable providers (OpenRouter, Claude, OpenAI-compatible) with tool use (read/write files, run commands, post comments)
 - **REST API** — Status, sessions, assign, dashboard
 - **Optional web search** — Tavily API for research tasks
 
@@ -78,8 +90,9 @@ workspace:
   keep_workspace: true
 
 agent:
-  provider: "openrouter"
+  provider: "openrouter"  # or "claude" | "openai"
   model: "moonshotai/kimi-k2.5"
+  # For openai: api_key_env, base_url (Azure, vLLM, etc.)
   max_turns: 60
 ---
 ```
@@ -90,7 +103,7 @@ agent:
 |----------|----------|-------------|
 | `TRELLO_API_KEY` | Yes | Trello API key |
 | `TRELLO_API_TOKEN` | Yes | Trello API token |
-| `OPENROUTER_API_KEY` | Yes* | OpenRouter API key (*or `ANTHROPIC_API_KEY` for direct Claude) |
+| `OPENROUTER_API_KEY` | Yes* | OpenRouter API key (*or `ANTHROPIC_API_KEY` for Claude, `OPENAI_API_KEY` for openai provider) |
 | `TGI_PORT` | No | Server port (default: 3199) |
 | `TAVILY_API_KEY` | No | Enables `web_search` tool |
 
@@ -101,7 +114,7 @@ WORKFLOW.md (config)
        ↓
   Orchestrator (polls Trello, enqueues cards)
        ↓
-  Agent Runner (Claude/OpenRouter, tool loop)
+  Agent Runner (pluggable provider, tool loop)
        ↓
   Workspace (isolated dir per card)
        ↓

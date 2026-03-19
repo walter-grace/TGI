@@ -42,6 +42,18 @@
 2. Add: `ANTHROPIC_API_KEY=sk-ant-...`
 3. In WORKFLOW.md: `provider: "claude"`
 
+**Option C: OpenAI-compatible (Azure, vLLM, Bedrock proxy, etc.)**
+
+1. Set your API key env (e.g. `OPENAI_API_KEY` or `AZURE_OPENAI_KEY`)
+2. In WORKFLOW.md:
+   ```yaml
+   agent:
+     provider: "openai"
+     model: "gpt-4o"  # or your deployment name
+     api_key_env: "OPENAI_API_KEY"
+     base_url: "https://api.openai.com/v1"  # or your endpoint
+   ```
+
 ## 4. Workspace Directory
 
 Create the workspace root (or it will be created on first run):

@@ -85,7 +85,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "tracker_create_card",
     description:
-      "Create a new card in the tracker. Use when breaking work into subtasks, adding follow-ups, or creating tasks for yourself. Put new cards in the Ready For Agent list so they get picked up.",
+      "Create a new card in the tracker. Use when breaking work into subtasks, adding follow-ups, or creating tasks for yourself. Put new cards in the Ready For Agent list so they get picked up, unless you are intentionally creating an index card in a dedicated list like `Skills`.",
     input_schema: {
       type: "object",
       properties: {

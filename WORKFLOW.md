@@ -147,3 +147,7 @@ Implement your hypothesis. When done, use `end_turn` so we can evaluate. The eva
 - Post progress updates to the source ticket.
 - **Execute for real.** Never use demo, test, or mock mode. Use the credentials in the workspace .env file. Scripts you write must run with real API calls and produce real results.
 - **Manage tasks in Trello.** When breaking work into subtasks, deferring items, or discovering follow-ups, create new cards using `tracker_create_card`. Put them in "Ready For Agent" so they get picked up. You can also create new lists with `tracker_create_list` when organizing work.
+- **Optional: Trello Skills index.** Keep a Trello list named `Skills` as a lightweight index of available agent skills (`.symphony/skills/*.md`).
+  - Card title: skill filename (no `.md` extension).
+  - Card description: 1-2 sentence summary plus when to use it (no full markdown sync).
+  - When you add a new file under `.symphony/skills/`, also create a matching card in the `Skills` list using `tracker_create_card` (if the list does not exist yet, create it with `tracker_create_list` first).

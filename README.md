@@ -50,6 +50,10 @@ For `openai`, set `base_url` and `api_key_env` in `WORKFLOW.md`. Enterprises can
    - Copy `.env.example` to `.env.local`
    - Add Trello API key and token ([get them here](https://trello.com/power-ups/admin))
    - Edit `WORKFLOW.md` frontmatter with your board ID and list names
+   - (Recommended) Populate the Trello `Skills` list so users and agents can discover available skills:
+     - `npm run trello:populate-skills:dry`
+     - `npm run trello:populate-skills`
+     - This reads `.symphony/skills/*.md` and creates one card per skill (skips existing cards).
 
 3. **Run**
    ```bash

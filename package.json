@@ -10,7 +10,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "verify": "npm run typecheck && npm run build",
-    "test:trello": "tsx scripts/test-trello.ts"
+    "test:trello": "tsx scripts/test-trello.ts",
+    "trello:populate-skills": "tsx scripts/populate-trello-skills.ts",
+    "trello:populate-skills:dry": "tsx scripts/populate-trello-skills.ts --dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.50.0",

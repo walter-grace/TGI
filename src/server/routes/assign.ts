@@ -52,3 +52,4 @@ export function createAssignRouter(registry: TrackerRegistry): Router {
 
   return router;
 }
+export default createAssignRouter;

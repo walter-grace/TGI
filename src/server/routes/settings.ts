@@ -17,3 +17,4 @@ export function createSettingsRouter(): Router {
 
   return router;
 }
+export default createSettingsRouter;

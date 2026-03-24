@@ -53,3 +53,4 @@ export function createTrackersRouter(registry: TrackerRegistry): Router {
 
   return router;
 }
+export default createTrackersRouter;

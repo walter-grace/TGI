@@ -130,3 +130,4 @@ export function createSessionsRouter(registry: TrackerRegistry): Router {
 
   return router;
 }
+export default createSessionsRouter;

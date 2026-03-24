@@ -32,3 +32,4 @@ export function createStatusRouter(registry: TrackerRegistry): Router {
 
   return router;
 }
+export default createStatusRouter;

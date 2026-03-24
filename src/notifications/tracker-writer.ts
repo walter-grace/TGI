@@ -7,7 +7,7 @@ import type { TrackerRegistry } from "../tracker/registry.js";
 import type { WorkflowConfig } from "../config/types.js";
 import { getSession } from "../orchestrator/state.js";
 import { logger } from "../observability/logger.js";
-import { notifyDiscord } from "./discord.js";
+import { sendDiscordNotification } from "./discord.js";
 
 export const trackerWriter = {
   async onSessionComplete(
@@ -53,15 +53,15 @@ export const trackerWriter = {
       ? ` (${session.tokenUsage.totalTokens} tokens${session.tokenUsage.cost != null ? `, $${session.tokenUsage.cost.toFixed(4)}` : ""})`
       : "";
     if (session.status === "completed") {
-      await notifyDiscord(
+      await sendDiscordNotification(
         `✅ **${session.issue.identifier}** completed in ${session.turnCount ?? 0} turns${usage}`
       );
     } else if (session.status === "failed") {
-      await notifyDiscord(
+      await sendDiscordNotification(
         `❌ **${session.issue.identifier}** failed: ${(session.error ?? "Unknown").slice(0, 200)}`
       );
     } else if (session.status === "stopped") {
-      await notifyDiscord(`⏸ **${session.issue.identifier}** stopped by user`);
+      await sendDiscordNotification(`⏸ **${session.issue.identifier}** stopped by user`);
     }
   },
 };

@@ -5,7 +5,7 @@
 
 import { logger } from "../observability/logger.js";
 
-export async function notifyDiscord(
+export async function sendDiscordNotification(
   message: string,
   opts?: { webhookUrl?: string }
 ): Promise<void> {

@@ -1,7 +1,7 @@
 {
   "name": "tgi",
-  "version": "1.0.0",
-  "description": "TGI — TrelloGI. Tracker-agnostic AI agent orchestration for project management tools.",
+  "version": "1.1.0",
+  "description": "TGI — TrelloGI. Tracker-agnostic AI agent orchestration with self-healing and Cloudflare Workers",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -9,8 +9,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run build",
     "test:trello": "tsx scripts/test-trello.ts",
+    "test:self-heal-cf": "tsx scripts/test-self-heal-cf.ts",
     "trello:populate-skills": "tsx scripts/populate-trello-skills.ts",
     "trello:populate-skills:dry": "tsx scripts/populate-trello-skills.ts --dry-run"
   },
@@ -28,17 +28,5 @@
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
-  },
-  "keywords": [
-    "trello",
-    "ai",
-    "agent",
-    "automation",
-    "project-management"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/walter-grace/TGI.git"
   }
 }

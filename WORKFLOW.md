@@ -2,7 +2,7 @@
 trackers:
   - kind: trello
     id: "main-board"
-    board_id: "YOUR_BOARD_ID"
+    board_id: "tmSsHTpR"
     api_key_env: "TRELLO_API_KEY"
     api_token_env: "TRELLO_API_TOKEN"
     lists:
@@ -12,42 +12,93 @@ trackers:
       done: "Done"
       failed: "Doing"
       unfinished: "Unfinished"
+      self_healing: "Self-Healing"
     poll_interval_seconds: 30
     label_filters: []
 
-  # Notion tracker — uncomment and configure to use Notion databases as kanban boards
-  # - kind: notion
-  #   id: "notion-wiki"
-  #   database_id: "your-database-id"
-  #   api_key_env: "NOTION_API_KEY"
-  #   status_property: "Status"      # Name of your Status property
-  #   title_property: "Name"         # Name of your Title property
-  #   labels_property: "Tags"        # Name of your multi-select Labels property
-  #   statuses:
-  #     ready: "Not started"
-  #     in_progress: "In progress"
-  #     review: "In review"
-  #     done: "Done"
-  #     failed: "Failed"
-  #     unfinished: "Unfinished"
-  #   poll_interval_seconds: 30
+  - kind: notion
+    id: "notion-board"
+    database_id: "32909ccdc7cb8083aab9cf8097d6838d"
+    api_key_env: "NOTION_API_KEY"
+    status_property: "Status"
+    title_property: "Name"
+    labels_property: "Labels"
+    statuses:
+      ready: "Not started"
+      in_progress: "In progress"
+      review: "Done"
+      done: "Done"
+      failed: "Not started"
+      unfinished: "Not started"
+    poll_interval_seconds: 30
+
+  - kind: linear
+    id: "linear-board"
+    team_key: "TRE"
+    api_key_env: "LINEAR_API_KEY"
+    statuses:
+      ready: "Todo"
+      in_progress: "In Progress"
+      review: "Done"
+      done: "Done"
+      failed: "Canceled"
+      unfinished: "Backlog"
+    poll_interval_seconds: 30
+
+  - kind: github
+    id: "github-repo"
+    owner: "walter-grace"
+    repo: "TGI"
+    api_token_env: "GITHUB_TOKEN"
+    labels:
+      ready: "agent:ready"
+      in_progress: "agent:in-progress"
+      review: "agent:review"
+      done: "agent:done"
+      failed: "agent:failed"
+      unfinished: "agent:unfinished"
+    poll_interval_seconds: 30
+
+  - kind: hubspot
+    id: "hubspot-tickets"
+    api_token_env: "HUBSPOT_ACCESS_TOKEN"
+    pipeline_id: "0"
+    stages:
+      ready: "1"
+      in_progress: "2"
+      review: "3"
+      done: "4"
+      failed: "1"
+      unfinished: "1"
+    poll_interval_seconds: 30
+
+  - kind: hubspot
+    id: "hubspot-deals"
+    api_token_env: "HUBSPOT_ACCESS_TOKEN"
+    pipeline_id: "default"
+    object_type: "deals"
+    stages:
+      ready: "appointmentscheduled"
+      in_progress: "qualifiedtobuy"
+      review: "presentationscheduled"
+      done: "closedwon"
+      failed: "closedlost"
+      unfinished: "appointmentscheduled"
+    poll_interval_seconds: 30
 
 workspace:
-  root: ~/workspaces/tgi
+  root: ~/workspaces/trello-symphony
   keep_workspace: true
   hooks:
     after_create: |
       echo "Workspace created for {{issue.identifier}}"
 
 agent:
-  provider: "openrouter"  # or "claude" | "openai" (OpenAI-compatible: Azure, Bedrock proxy, vLLM, etc.)
+  provider: "openrouter"
   model: "moonshotai/kimi-k2.5"  # Kimi 2.5 (default)
   # model: "xiaomi/mimo-v2-pro"  # alternative; free tier / upstream rate limits vary
-  # For provider: "openai" — use your own model/endpoint:
-  #   api_key_env: "OPENAI_API_KEY"
-  #   base_url: "https://api.openai.com/v1"  # or Azure, vLLM, Ollama proxy, etc.
   # available_models: ["moonshotai/kimi-k2.5", "xiaomi/mimo-v2-pro", "openai/gpt-5.4-nano", "google/gemini-3-flash-preview"]  # optional: dashboard dropdown
-  max_concurrent_agents: 5
+  max_concurrent_agents: 8
   max_turns: 60
   timeout_minutes: 60
   experiment_mode:
@@ -70,9 +121,11 @@ skills:
     bug: ["git", "code", "test", "debug"]
     feature: ["git", "code", "test"]
     devops: ["git", "deploy", "infra"]
+    self-heal: ["git", "code", "test", "debug", "self-heal", "self-heal-fix"]
 ---
 
 You are an autonomous AI agent working on a task from {{issue.trackerKind}}.
+**Today's date is {{currentDate}}.** Always use the current year (2026) in any output, research, or file names.
 {{#if attempt}}(Continuation attempt {{attempt}} — do not repeat prior work.){{/if}}
 
 {{#if experimentContext}}

@@ -177,6 +177,12 @@ export class TrelloAdapter implements ITracker {
     const listNames = [this.lists.ready];
     if (this.lists.unfinished) listNames.push(this.lists.unfinished);
 
+    // Self-Healing list: cards are polled as ready and auto-tagged with "self-heal"
+    const selfHealingListName = this.lists.self_healing;
+    if (selfHealingListName && this.listIdMap.has(selfHealingListName)) {
+      listNames.push(selfHealingListName);
+    }
+
     const issues: Issue[] = [];
     for (const listName of listNames) {
       const listId = this.getListId(listName);
@@ -193,6 +199,19 @@ export class TrelloAdapter implements ITracker {
         if (!hasFilter) continue;
       }
       const issue = await this.normalizeCard(card);
+
+      // Auto-tag cards from Self-Healing list with "self-heal" label
+      if (selfHealingListName && listName === selfHealingListName) {
+        if (!issue.labels.some((l) => l.toLowerCase() === "self-heal")) {
+          try {
+            await this.addLabel(card.id, "self-heal");
+            issue.labels.push("self-heal");
+          } catch (err) {
+            logger.warn("Failed to auto-tag self-heal label", { cardId: card.id, error: String(err) });
+          }
+        }
+      }
+
       issues.push(issue);
     }
     }
@@ -266,7 +285,9 @@ export class TrelloAdapter implements ITracker {
       createdAt: a.date,
     }));
 
-    const labels = (await this.getCardLabels(card.id)).map((l) => l.name);
+    const labelNames = (await this.getCardLabels(card.id)).map((l) => l.name);
+    const modelLabel = labelNames.find((n) => n.startsWith("model:"));
+    const model = modelLabel ? modelLabel.slice(6) : undefined;
 
     const listName = this.getListNameById(card.idList);
     const status = this.listNameToStatus(listName);
@@ -278,7 +299,8 @@ export class TrelloAdapter implements ITracker {
       identifier: card.shortLink,
       title: card.name,
       description: card.desc ?? "",
-      labels,
+      labels: labelNames,
+      model,
       checklist,
       comments,
       assignee: null,
@@ -303,6 +325,7 @@ export class TrelloAdapter implements ITracker {
     if (name === this.lists.done) return "done";
     if (name === this.lists.failed) return "failed";
     if (this.lists.unfinished && name === this.lists.unfinished) return "unfinished";
+    if (this.lists.self_healing && name === this.lists.self_healing) return "ready";
     return "ready";
   }
 
@@ -372,6 +395,36 @@ export class TrelloAdapter implements ITracker {
     throw new Error(`Checklist item ${itemId} not found on card ${issueId}`);
   }
 
+  async addChecklistItem(
+    issueId: string,
+    name: string
+  ): Promise<{ id: string; name: string }> {
+    const checklists = await trelloFetch<TrelloChecklist[]>(
+      `/cards/${issueId}/checklists`,
+      this.key,
+      this.token
+    );
+    let checklistId: string;
+    if (checklists.length === 0) {
+      const created = await trelloFetch<TrelloChecklist>(
+        `/checklists?idCard=${issueId}&name=Tasks`,
+        this.key,
+        this.token,
+        { method: "POST" }
+      );
+      checklistId = created.id;
+    } else {
+      checklistId = checklists[0].id;
+    }
+    const item = await trelloFetch<TrelloCheckItem>(
+      `/checklists/${checklistId}/checkItems?name=${encodeURIComponent(name)}`,
+      this.key,
+      this.token,
+      { method: "POST" }
+    );
+    return { id: item.id, name: item.name };
+  }
+
   async addLabel(issueId: string, label: string): Promise<void> {
     const boardLabels = await trelloFetch<TrelloLabel[]>(
       `/boards/${this.boardId}/labels`,
@@ -427,6 +480,7 @@ export class TrelloAdapter implements ITracker {
     listName: string;
     title: string;
     description?: string;
+    model?: string;
   }): Promise<Issue> {
     await this.refreshListMap();
     const idList = this.getListId(params.listName);
@@ -445,6 +499,9 @@ export class TrelloAdapter implements ITracker {
         body: JSON.stringify(body),
       }
     );
+    if (params.model) {
+      await this.addLabel(card.id, `model:${params.model}`);
+    }
     return this.normalizeCard(card);
   }
 

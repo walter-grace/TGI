@@ -46,6 +46,8 @@ export interface Issue {
   status: IssueState;
   url: string;
   metadata: Record<string, unknown>;
+  /** Override model for this task (from label "model:provider/model" or task creation) */
+  model?: string;
 }
 
 // --- ITracker interface (THE critical abstraction) ---
@@ -78,6 +80,8 @@ export interface TrackerListConfig {
   failed: string;
   /** Optional. When set, cards that hit max turns are moved here and re-picked for continuation. */
   unfinished?: string;
+  /** Optional. When set, cards in this list are auto-tagged with "self-heal" label and polled as ready. */
+  self_healing?: string;
 }
 
 export interface TrelloTrackerConfig {
@@ -87,6 +91,55 @@ export interface TrelloTrackerConfig {
   api_key_env: string;
   api_token_env: string;
   lists: TrackerListConfig;
+  poll_interval_seconds?: number;
+  label_filters?: string[];
+}
+
+export interface NotionTrackerConfig {
+  kind: "notion";
+  id: string;
+  database_id: string;
+  api_key_env: string;
+  /** Name of the Status property in the Notion database (default: "Status") */
+  status_property?: string;
+  /** Name of the Title property (default: "Name") */
+  title_property?: string;
+  /** Name of the multi-select Labels property (default: "Labels") */
+  labels_property?: string;
+  /** Maps IssueState values to Notion status names */
+  statuses: TrackerListConfig;
+  poll_interval_seconds?: number;
+  label_filters?: string[];
+}
+
+export interface LinearTrackerConfig {
+  kind: "linear";
+  id: string;
+  team_key: string;
+  api_key_env: string;
+  statuses: TrackerListConfig;
+  poll_interval_seconds?: number;
+  label_filters?: string[];
+}
+
+export interface GitHubTrackerConfig {
+  kind: "github";
+  id: string;
+  owner: string;
+  repo: string;
+  api_token_env: string;
+  labels: TrackerListConfig;
+  poll_interval_seconds?: number;
+  label_filters?: string[];
+}
+
+export interface HubSpotTrackerConfig {
+  kind: "hubspot";
+  id: string;
+  api_token_env: string;
+  pipeline_id: string;
+  object_type?: string;
+  stages: TrackerListConfig;
   poll_interval_seconds?: number;
   label_filters?: string[];
 }
@@ -125,6 +178,8 @@ export interface ExperimentModeConfig {
 export interface AgentConfig {
   provider: string;
   model: string;
+  /** Optional list of models for dashboard dropdown. If unset, uses default popular models. */
+  available_models?: string[];
   /** Env var for API key (e.g. OPENAI_API_KEY). Used by openai provider; others use provider-specific defaults. */
   api_key_env?: string;
   /** Base URL for OpenAI-compatible APIs (openai provider). Enables Azure, Bedrock proxy, vLLM, etc. */
@@ -194,6 +249,9 @@ export interface AgentSession {
   error?: string;
   turnCount?: number;
   tokenUsage?: TokenUsage;
+  browserLiveUrl?: string;
+  browserSessionId?: string;
+  writtenFiles?: string[];
 }
 
 // --- API DTOs ---
